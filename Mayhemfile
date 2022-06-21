@@ -1,7 +1,6 @@
-project: rnshah9/peregrine
+project: peregrine
 target: peregrine
-tests: null
 
 cmds:
-  - cmd: /repo/build/peregrine.elf @@
+  - cmd: /repo/build/peregrine.elf /test.pe
     filepath: /test.pe
