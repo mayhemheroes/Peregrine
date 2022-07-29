@@ -2,5 +2,4 @@ project: peregrine
 target: peregrine
 
 cmds:
-  - cmd: /repo/build/peregrine.elf /test.pe
-    filepath: /test.pe
+  - cmd: /peregrine.elf @@
