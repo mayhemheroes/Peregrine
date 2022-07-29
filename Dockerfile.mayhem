@@ -5,14 +5,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential meson
 
 COPY . /repo
 WORKDIR /repo/build
-RUN meson ..
-RUN ninja
-
-RUN mkdir -p /deps
-RUN ldd /repo/build/peregrine.elf | tr -s '[:blank:]' '\n' | grep '^/' | xargs -I % sh -c 'cp % /deps;'
+RUN meson .. 
+RUN ninja 
 
 FROM ubuntu:22.04 as package
-
-COPY --from=builder /deps /deps
-COPY --from=builder /repo/build/peregrine.elf /repo/build/peregrine.elf
-ENV LD_LIBRARY_PATH=/deps
+COPY --from=builder /repo/build/peregrine.elf /
