@@ -10,13 +10,25 @@
 LEXER::LEXER(std::string input, std::string filename){
     m_input = input;
     m_filename = filename;
-    m_statments=split_ln(input);
     if(m_input.size()>0){
+        m_statments=split_ln(input);
         m_curr_item=m_input[0];
         m_curr_line=m_statments[0];
         lex();
+        complete_it();
     }
-    complete_it();
+    else {
+        m_result.push_back(Token{
+            m_loc,
+            m_curr_line,
+            "<tk_eof>",
+            m_curr_index,
+            m_curr_index+1,
+            m_line,
+            tk_eof,
+            m_tab_count
+        });
+    }
 }
 
 void LEXER::add_unknown(){
@@ -75,7 +87,7 @@ void LEXER::add_unknown(){
         type = key_map[m_keyword];
     }
     else if(m_keyword!=""){
-        if(is_int(m_keyword)){
+        if(is_int(m_keyword)||is_hex(m_keyword)){
             type=tk_integer;
         }
         else if(std::regex_match(m_keyword,std::regex(R"(^^\s*[-+]?((\d+(\.\d+)?)|(\d+\.)|(\.\d+))(e[-+]?\d+)?\s*$)"))){

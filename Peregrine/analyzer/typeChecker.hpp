@@ -21,11 +21,13 @@ class TypeChecker : public ast::AstVisitor {
     private:
     std::vector<PEError> m_errors;
     void add_error(Token tok, std::string_view msg);
-    EnvPtr createEnv(EnvPtr parent = nullptr);
+    bool defined(ast::AstNodePtr name);
+    EnvPtr createEnv(EnvPtr parent);
     std::string identifierName(ast::AstNodePtr identifier);
-    void checkBody(ast::AstNodePtr body);
+    void checkBody(ast::AstNodePtr body,
+                   std::vector<std::pair<TypePtr,ast::AstNodePtr>> add_var={});
 
-    void check(ast::AstNodePtr expr, const Type& expectedType);
+    void check(ast::AstNodePtr expr, const TypePtr expectedType);
 
     bool visit(const ast::ClassDefinition& node);
     bool visit(const ast::ImportStatement& node);
@@ -74,6 +76,9 @@ class TypeChecker : public ast::AstVisitor {
     bool visit(const ast::DefaultArg& node);
     bool visit(const ast::TernaryIf& node);
     bool visit(const ast::TryExcept& node);
+    bool visit(const ast::MultipleAssign& node);
+    bool visit(const ast::ExpressionTuple& node);
+    bool visit(const ast::TypeTuple& node);
 
     std::string m_filename;
     TypePtr m_result;
@@ -81,6 +86,7 @@ class TypeChecker : public ast::AstVisitor {
 
     // the function whose body is being currently checked
     std::shared_ptr<FunctionType> m_currentFunction;
+    TypePtr m_returnType=NULL;//current return type
 };
 }
 #endif

@@ -472,9 +472,12 @@ types::TypePtr VariableStatement::processedType() const {
 }
 
 void VariableStatement::setProcessedType(types::TypePtr processedType,bool defined_before) {
-    m_processedType = processedType;
-    if(!defined_before){
+    m_processedType = processedType;            
+    if(!defined_before&&m_processedType!=NULL){
         m_type=m_processedType->getTypeAst();
+    }
+    if (m_value->type()==KAstNoLiteral&&m_processedType!=NULL) {
+        m_value=m_processedType->defaultValue();
     }
 }
 
@@ -517,7 +520,10 @@ types::TypePtr ConstDeclaration::processedType() const {
 }
 
 void ConstDeclaration::setProcessedType(types::TypePtr processedType) {
-    m_processedType = processedType;
+    if(m_processedType!=NULL){
+        m_processedType = processedType;
+        m_type=m_processedType->getTypeAst();
+    }
 }
 
 Token ConstDeclaration::token() const { return m_token; }
@@ -527,13 +533,13 @@ AstKind ConstDeclaration::type() const { return KAstConstDecl; }
 std::string ConstDeclaration::stringify() const {
     std::string res = "const ";
 
-    if (m_type->type() != KAstNoLiteral) {
-        res += m_type->stringify();
-        res += " ";
-    }
 
     res += m_name->stringify();
 
+    if (m_type->type() != KAstNoLiteral) {
+        res += ":";
+        res += m_type->stringify();
+    }
     res += " = ";
     res += m_value->stringify();
 
@@ -664,6 +670,10 @@ std::vector<parameter> FunctionDefinition::parameters() const {
     return m_parameters;
 }
 std::string FunctionDefinition::comment() const { return m_comment; }
+
+void FunctionDefinition::setType(types::TypePtr type){
+    m_returnType=type->getTypeAst();
+}
 
 AstNodePtr FunctionDefinition::body() const { return m_body; }
 
@@ -1481,12 +1491,29 @@ MultipleAssign::MultipleAssign(std::vector<AstNodePtr> names,std::vector<AstNode
 std::vector<AstNodePtr> MultipleAssign::names() const{return m_names;}
 std::vector<AstNodePtr> MultipleAssign::values() const{return m_values;}
 AstKind MultipleAssign::type() const{return KAstMultipleAssign;}
+std::vector<std::pair<types::TypePtr,bool>> MultipleAssign::processed_types() const{return m_processed_types;}
+void MultipleAssign::setProcessedType(std::vector<std::pair<types::TypePtr,bool>> processed_types){
+    m_processed_types=processed_types;
+}
 std::string MultipleAssign::stringify() const{
     std::string res="((";
-    for (size_t i=0;i<m_names.size();++i){
-        res+=m_names[i]->stringify();
-        if(i<m_names.size()-1){
-            res+=",";
+    if(m_processed_types.size()>0){
+        for (size_t i=0;i<m_names.size();++i){
+            res+=m_names[i]->stringify();
+            if(!m_processed_types[i].second){
+                res+=":"+m_processed_types[i].first->getTypeAst()->stringify();
+            }
+            if(i<m_names.size()-1){
+                res+=",";
+            }
+        }
+    }
+    else{
+        for (size_t i=0;i<m_names.size();++i){
+            res+=m_names[i]->stringify();
+            if(i<m_names.size()-1){
+                res+=",";
+            }
         }
     }
     res+=")=(";
@@ -1500,6 +1527,12 @@ std::string MultipleAssign::stringify() const{
     return res;
 }
 Token MultipleAssign::token() const{return m_names[0]->token();}
+MultipleAssign::MultiAssignType MultipleAssign::get_assign_type() const{
+    return m_assign_type;
+}
+void MultipleAssign::set_assign_type(MultipleAssign::MultiAssignType type){
+    m_assign_type = type;
+}
 AugAssign::AugAssign(Token tok, AstNodePtr name, AstNodePtr value){
     m_token=tok;
     m_name=name;

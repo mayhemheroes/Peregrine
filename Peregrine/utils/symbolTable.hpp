@@ -4,6 +4,7 @@
 #include "ast/ast.hpp"
 
 #include <iostream>
+#include <assert.h>
 #include <map>
 #include <memory>
 #include <algorithm>
@@ -14,10 +15,16 @@ template<typename T>
 class SymbolTable {
     std::map<std::string, T> m_symbols;
     std::shared_ptr<SymbolTable<T>> m_parent;
+    std::map<std::string, T> m_enumMap;
+    std::map<std::string, T> m_unionMap;
 
   public:
     SymbolTable(std::shared_ptr<SymbolTable> parent) {
         m_parent = parent;
+        if(m_parent!=nullptr){
+            m_enumMap = parent->getEnumMap();
+            m_unionMap = parent->getUnionMap();
+        }
     }
 
     std::optional<T> get(std::string name) {
@@ -32,6 +39,22 @@ class SymbolTable {
         return m_symbols[name];
     }
 
+    std::map<std::string, T> getEnumMap(){
+        return m_enumMap;
+    }
+
+    void add_enum(std::string key,T value){
+        m_enumMap[key]=value;
+    }
+
+    std::map<std::string, T> getUnionMap(){
+        return m_unionMap;
+    }
+
+    void add_union(std::string key,T value){
+        m_unionMap[key]=value;
+    }
+
     bool set(std::string name, T value) {
         if (get(name)) {
             return false; // the symbol has been defined already
@@ -40,6 +63,12 @@ class SymbolTable {
         m_symbols[name] = value;
         get(name);
         return true;
+    }
+
+    bool set(ast::AstNodePtr name, T value) {
+        assert(name->type() == ast::KAstIdentifier);
+        auto identifier=std::dynamic_pointer_cast<ast::IdentifierExpression>(name);
+        return set(identifier->value(), value);
     }
 
     bool reassign(std::string name, T value) {
