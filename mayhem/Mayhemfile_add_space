@@ -1,0 +1,6 @@
+project: peregrine
+target: add-space
+
+cmds:
+  - cmd: /fuzz_add_space
+    libfuzzer: true
