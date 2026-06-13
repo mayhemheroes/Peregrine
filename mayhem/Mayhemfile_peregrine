@@ -3,3 +3,4 @@ target: peregrine
 
 cmds:
   - cmd: /peregrine.elf @@
+    filepath: /test.pe
